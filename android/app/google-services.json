@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "864072856160",
+    "project_id": "golisoda-46677",
+    "storage_bucket": "golisoda-46677.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:864072856160:android:71180bed68cc126aa70905",
+        "android_client_info": {
+          "package_name": "com.example.goli_soda"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "864072856160-navs02oemm0taq0260nhiethe5ott5f1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCp5obLvOZK3HqJhLOS7iV_vZgdcdOXDuA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "864072856160-navs02oemm0taq0260nhiethe5ott5f1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
