@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:goli_soda/src/utils/custom_colors.dart';
 import 'package:sizer/sizer.dart';
 
@@ -7,8 +8,9 @@ class CustomFormField extends StatelessWidget {
   final TextEditingController controller;
   final String? Function(String?) validator;
   final void Function(String?)? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
 
-  CustomFormField({required this.label, required this.controller, required this.validator,this.onChanged });
+  CustomFormField({required this.label, required this.controller, required this.validator,this.onChanged ,this.inputFormatters});
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +49,7 @@ class CustomFormField extends StatelessWidget {
             child: Center(
               child: TextFormField(
 
+                inputFormatters: inputFormatters,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.whiteColor,

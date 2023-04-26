@@ -107,18 +107,19 @@ class AllShopCubit extends Cubit<AllShopState> {
   }
 
   Future<void> updateLine(
-      String lineId, String lineNumber, String lineName, String shopId) async {
+      String lineId, String lineNumber, String lineName, String shopId,
+      {bool updateShopLine = false}) async {
     emit(AllShopLoading());
     List<Map<dynamic, dynamic>> jsonList = [];
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    final QuerySnapshot querySnapshot;
+
     try {
       final CollectionReference itemsRef = FirebaseFirestore.instance.collection('shops');
       final QuerySnapshot snapshot = await itemsRef
           .where('line_id', isEqualTo: lineId)
-          .where('line_number', isGreaterThanOrEqualTo: num.parse(lineNumber))
           .orderBy('line_number')
           .get();
+
       final WriteBatch batch = FirebaseFirestore.instance.batch();
 
       if (snapshot.docs.isEmpty) {
@@ -142,9 +143,23 @@ class AllShopCubit extends Cubit<AllShopState> {
           });
         }
       } else {
+        if(updateShopLine){
+          final QuerySnapshot snapshot2 = await itemsRef
+              .where('line_id', isEqualTo: shopId)
+              .orderBy('line_number')
+              .get();
+          snapshot2.docs.forEach((doc) {
+            if(doc['line_number']>num.parse(lineNumber)){
+              batch.update(doc.reference, {'line_number': doc['line_number'] - 1});
+            }
+          });
+        }
         snapshot.docs.forEach((doc) {
-          batch.update(doc.reference, {'line_number': doc['line_number'] + 1});
+          if(doc['line_number']>=num.parse(lineNumber)){
+            batch.update(doc.reference, {'line_number': doc['line_number'] + 1});
+          }
         });
+
         await batch.commit();
         itemsRef.doc(shopId).update({
           'line_number': num.parse(lineNumber),
@@ -152,8 +167,8 @@ class AllShopCubit extends Cubit<AllShopState> {
           "line_id": lineId,
         });
       }
-
       emit(AllShopLoaded(jsonList: jsonList));
+
     } catch (e) {
       emit(AllShopError(message: e.toString()));
       print('Error getting region collection data: $e');

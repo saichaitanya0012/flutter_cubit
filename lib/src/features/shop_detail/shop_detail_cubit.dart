@@ -66,6 +66,33 @@ class ShopDetailCubit extends Cubit<ShopDetailState> {
       } catch (e) {
         print('Error getting region collection data: $e');
       }
+    }).then((value) async {
+      List<Map<dynamic, dynamic>> jsonList = [];
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final QuerySnapshot querySnapshot;
+      try {
+        querySnapshot = await firestore.collection('pending').get();
+        for (QueryDocumentSnapshot documentSnapshot in querySnapshot.docs) {
+          final data = documentSnapshot.data() as Map<String, dynamic>;
+          jsonList.add(data);
+        }
+        if (jsonList.isNotEmpty) {
+          await firestore.collection('pending').doc(jsonList[0]['id']).update({
+            "remaining_balance": jsonList[0]['current_balance'] + int.parse(currentBalance!),
+            "remaining_crates": jsonList[0]['remaining_crates'] + int.parse(totalCrates!),
+          });
+        } else {
+          final DocumentReference docRef = firestore.collection('pending').doc();
+          await docRef.set({
+            "id": docRef.id,
+            "remaining_balance": int.parse(currentBalance!),
+            "remaining_crates": int.parse(totalCrates!),
+            "date": DateTime.now(),
+          });
+        }
+      } catch (e) {
+        print('Error getting region collection data: $e');
+      }
     }).then((value) {
       print("Shop data updated");
       emit(ShopDetailSuccess());

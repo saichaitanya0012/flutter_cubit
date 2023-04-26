@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:goli_soda/src/utils/custom_colors.dart';
 import 'package:sizer/sizer.dart';
 
@@ -11,6 +12,7 @@ class CustomTextFormField extends StatelessWidget {
   final String? Function(String?)? validator;
   final void Function(String?)? onSaved;
   final void Function(String?)? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextFormField({
     Key? key,
@@ -21,11 +23,13 @@ class CustomTextFormField extends StatelessWidget {
      this.validator,
      this.onSaved,
       this.onChanged,
+      this.inputFormatters,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      inputFormatters:inputFormatters ,
       textAlign: TextAlign.center,
       style: TextStyle(
         color: AppColors.whiteColor,

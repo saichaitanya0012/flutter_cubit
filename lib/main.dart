@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:goli_soda/src/features/all_shops/all_shops_view.dart';
 import 'package:goli_soda/src/features/all_shops/cubit/all_shop_cubit.dart';
@@ -37,7 +39,8 @@ void main() async {
     //   fetchTimeout: const Duration(seconds: 10),
     //   minimumFetchInterval: const Duration(hours: 1),
     // ));
-    await HiveStore().initBox().then((value) => runApp(MyApp(
+    await HiveStore().initBox().then((value) =>
+        runApp(MyApp(
           connectivity: Connectivity(),
         )));
   });
@@ -62,14 +65,16 @@ class MyApp extends StatelessWidget {
           BlocProvider<HomeCubit>(create: (context) => HomeCubit()),
           BlocProvider<CreateVendorCubit>(create: (context) => CreateVendorCubit()),
           BlocProvider<ShopDetailCubit>(create: (context) => ShopDetailCubit()),
-          BlocProvider<SignInCubit>(create: (context) => SignInCubit()),
+          // BlocProvider<SignInCubit>(create: (context) => SignInCubit()),
           BlocProvider<SignUpCubit>(create: (context) => SignUpCubit()),
           BlocProvider<TotalHistoryCubit>(create: (context) => TotalHistoryCubit()),
           BlocProvider<TotalCollectionCubit>(create: (context) => TotalCollectionCubit()),
           BlocProvider<ShopHistoryCubit>(create: (context) => ShopHistoryCubit()),
           BlocProvider<GetLinesCubit>(create: (context) => GetLinesCubit()),
-          BlocProvider<ProdutionDetailsCubit>(create: (context) => ProdutionDetailsCubit()),
-          BlocProvider<ManagementDetailsCubit>(create: (context) => ManagementDetailsCubit()),
+          BlocProvider<ProdutionDetailsCubit>(
+              create: (context) => ProdutionDetailsCubit()),
+          BlocProvider<ManagementDetailsCubit>(
+              create: (context) => ManagementDetailsCubit()),
           BlocProvider<LineDetailsCubit>(create: (context) => LineDetailsCubit()),
           BlocProvider<DayReportCubit>(create: (context) => DayReportCubit()),
           BlocProvider<OverAllCubit>(create: (context) => OverAllCubit()),
@@ -90,3 +95,6 @@ class MyApp extends StatelessWidget {
     });
   }
 }
+
+
+

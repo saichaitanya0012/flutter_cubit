@@ -24,6 +24,14 @@ class _DetailManagementState extends State<DetailManagement> {
     super.initState();
   }
 
+  String expensesToString(List<dynamic> expenses) {
+    String expensesString = '';
+    expenses.forEach((element) {
+      expensesString += element['type'] + ' : ' + element['amount'].toString() + '\n';
+    });
+    return expensesString;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,7 +63,7 @@ class _DetailManagementState extends State<DetailManagement> {
                   e['line_collection'],
                   e['other_collection'],
                   e['total_collection'],
-                  e['expenses'],
+                  expensesToString(e['expenses'])
                 ]).toList(),
                 fixedColCells: state.jsonList.map((e) => DateFormat('d MMM yy').format(e['date'].toDate())).toList(),
                 fixedRowCells: [

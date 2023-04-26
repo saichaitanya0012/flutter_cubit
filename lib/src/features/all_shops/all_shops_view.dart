@@ -1,19 +1,17 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:goli_soda/src/features/all_shops/cubit/all_shop_cubit.dart';
 import 'package:goli_soda/src/features/auth/widget/custom_textfield.dart';
 import 'package:goli_soda/src/features/create_vendor/create_vendor_cubit.dart';
-import 'package:goli_soda/src/features/create_vendor/create_vendor_screen.dart';
 import 'package:goli_soda/src/features/get_lines/get_lines_view.dart';
-import 'package:goli_soda/src/features/home/home_cubit.dart';
 import 'package:goli_soda/src/features/shop_detail/shop_detail_view.dart';
-import 'package:goli_soda/src/utils/circular_textfield.dart';
+import 'package:goli_soda/src/features/total_history/total_collection/total_collection_cubit.dart';
 import 'package:goli_soda/src/utils/common_snackbar.dart';
 import 'package:goli_soda/src/utils/custom_colors.dart';
 import 'package:goli_soda/src/utils/custom_search.dart';
 import 'package:goli_soda/src/utils/navigation.dart';
+import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:sizer/sizer.dart';
 
 class AllShopsView extends StatefulWidget {
@@ -31,6 +29,7 @@ class _AllShopsViewState extends State<AllShopsView> {
   void initState() {
     allShopCubit = BlocProvider.of<AllShopCubit>(context);
     allShopCubit!.getAllShopsData(isAllShops: widget.isAllShops);
+    BlocProvider.of<TotalCollectionCubit>(context).getPendingCollectedData();
     super.initState();
   }
 
@@ -77,6 +76,107 @@ class _AllShopsViewState extends State<AllShopsView> {
           child: ListView(
             children: [
               search(),
+              BlocBuilder<TotalCollectionCubit, TotalCollectionState>(
+                builder: (context, state) {
+                  if (state is TotalCollectionLoading) {
+                    return collectionLoading();
+                  } else if (state is TotalCollectionLoaded) {
+                    var data = state.jsonList!.isNotEmpty
+                        ? state.jsonList![0]
+                        : {
+                      "amount": "0",
+                      "date":
+                      DateFormat('dd-MMM-yyyy').format(DateTime.now()).toString()
+                    };
+                    return Container(
+                      margin: EdgeInsets.all(10.sp),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondaryColor,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.lightColor.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 7,
+                            offset: Offset(0, 3), // changes position of shadow
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(14.sp),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Total Pending Collection",
+                                  style: TextStyle(
+                                      color: AppColors.lightColor,
+                                      fontSize: 8.sp,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(top: 8.sp),
+                                  child: Text(
+                                    "${data['remaining_balance'] ?? 0}",
+                                    style: TextStyle(
+                                        color: AppColors.whiteColor,
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Total Pending Creates",
+                                  style: TextStyle(
+                                      color: AppColors.lightColor,
+                                      fontSize: 8.sp,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(top: 8.sp),
+                                  child: Text(
+                                    "${data['remaining_crates'] ?? 0}",
+                                    style: TextStyle(
+                                        color: AppColors.whiteColor,
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  } else if (state is TotalCollectionError) {
+                    return Container(
+                      height: 50,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Error"),
+                        ],
+                      ),
+                    );
+                  }
+                  return Container(
+                    height: 50,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("No Data"),
+                      ],
+                    ),
+                  );
+                },
+              ),
               BlocConsumer<AllShopCubit, AllShopState>(
                 listener: (context, state) {
                   if (state is AllShopLoaded) {
@@ -340,6 +440,76 @@ class _AllShopsViewState extends State<AllShopsView> {
           ],
         );
       },
+    );
+  }
+
+  Shimmer collectionLoading() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.withOpacity(0.1),
+      highlightColor: Colors.white,
+      child: Container(
+        margin: EdgeInsets.all(10.sp),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 1,
+              blurRadius: 7,
+              offset: Offset(0, 3), // changes position of shadow
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(14.sp),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Total collection",
+                    style: TextStyle(
+                        color: Colors.grey, fontSize: 8.sp, fontWeight: FontWeight.w500),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(top: 8.sp),
+                    child: Text(
+                      "",
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Crates Delivered",
+                    style: TextStyle(
+                        color: Colors.grey, fontSize: 8.sp, fontWeight: FontWeight.w500),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(top: 8.sp),
+                    child: Text(
+                      "",
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

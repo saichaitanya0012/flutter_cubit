@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:goli_soda/src/features/create_vendor/create_vendor_cubit.dart';
+import 'package:goli_soda/src/features/get_lines/get_lines_view.dart';
 import 'package:goli_soda/src/features/line_details/cubits/line_details_cubit.dart';
 import 'package:goli_soda/src/features/production_details/widget/custom_textfield.dart';
 import 'package:goli_soda/src/utils/common_snackbar.dart';
 import 'package:goli_soda/src/utils/custom_colors.dart';
+import 'package:goli_soda/src/utils/navigation.dart';
 import 'package:sizer/sizer.dart';
 
 class LineDetails extends StatefulWidget {
@@ -100,51 +104,64 @@ class _LineDetailsState extends State<LineDetails> {
               child: Row(
                 children: [
                   Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        FocusScope.of(context).unfocus();
-                        if (_formKey.currentState!.validate()) {
-                          if (selectedDate == null) {
-                            CustomSnackBar()
-                                .snackbarMessage(message: "Please Select Date");
-                            return;
-                          } else {
-                            BlocProvider.of<LineDetailsCubit>(context).createLineDetails(
-                                selectedDate!,
-                                crateSent.text,
-                                crateBack.text,
-                                (int.parse(crateSent.text) - int.parse(crateBack.text))
-                                    .toString(),
-                                returnCrate.text);
-                          }
-                        }
-                      },
-                      child: Container(
-                        width: 100,
-                        height: 30.sp,
-                        decoration: BoxDecoration(
-                          color: AppColors.blueColor,
-                          borderRadius: BorderRadius.circular(100.sp),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.lightColor,
-                              spreadRadius: 1,
-                              blurRadius: 1,
-                              offset: Offset(0, 0), // changes position of shadow
+                    child: BlocBuilder<CreateVendorCubit, CreateVendorState>(
+                      builder: (context, state1) {
+                        return InkWell(
+                          onTap: () {
+                            if (state1 is CreateVendorInitial) {
+                              FocusScope.of(context).unfocus();
+                              if (_formKey.currentState!.validate()) {
+                                if (selectedDate == null) {
+                                  CustomSnackBar()
+                                      .snackbarMessage(message: "Please Select Date");
+                                  return;
+                                } else if (state1.name == null || state1.id == null) {
+                                  CustomSnackBar()
+                                      .snackbarMessage(message: "Please Select Line");
+                                } else {
+                                  BlocProvider.of<LineDetailsCubit>(context)
+                                      .createLineDetails(
+                                          selectedDate!,
+                                          crateSent.text,
+                                          crateBack.text,
+                                          (int.parse(crateSent.text) -
+                                                  int.parse(crateBack.text))
+                                              .toString(),
+                                          returnCrate.text,
+                                          state1.name!,
+                                          state1.id!);
+                                }
+                              }
+                            }
+                          },
+                          child: Container(
+                            width: 100,
+                            height: 30.sp,
+                            decoration: BoxDecoration(
+                              color: AppColors.blueColor,
+                              borderRadius: BorderRadius.circular(100.sp),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.lightColor,
+                                  spreadRadius: 1,
+                                  blurRadius: 1,
+                                  offset: Offset(0, 0), // changes position of shadow
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            "Submit",
-                            style: TextStyle(
-                              color: AppColors.whiteColor,
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.bold,
+                            child: Center(
+                              child: Text(
+                                "Submit",
+                                style: TextStyle(
+                                  color: AppColors.whiteColor,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -181,9 +198,96 @@ class _LineDetailsState extends State<LineDetails> {
                         ],
                       ),
                     ),
+                    BlocBuilder<CreateVendorCubit, CreateVendorState>(
+                      builder: (context, state) {
+                        if (state is CreateVendorInitial) {
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Line : ",
+                                style: TextStyle(
+                                    color: AppColors.whiteColor,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  state.id != null
+                                      ? Row(
+                                          children: [
+                                            SizedBox(height: 10.0),
+                                            Text(
+                                              (state.name ?? "unavailable")
+                                                  .toString()
+                                                  .toUpperCase(),
+                                              style: TextStyle(
+                                                fontSize: 12.sp,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.whiteColor,
+                                              ),
+                                            ),
+                                            Row(
+                                              children: [
+                                                IconButton(
+                                                  onPressed: () {
+                                                    context
+                                                        .read<CreateVendorCubit>()
+                                                        .emit(CreateVendorInitial());
+                                                  },
+                                                  icon: Icon(
+                                                    Icons.clear,
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                              ],
+                                            )
+                                          ],
+                                        )
+                                      : Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            TextButton(
+                                              onPressed: () {
+                                                nextScreen(
+                                                    context,
+                                                    GetLinesScreen(
+                                                      isSearch: true,
+                                                    ));
+                                              },
+                                              child: Text(
+                                                '+ Add Line',
+                                                style: TextStyle(
+                                                  color: AppColors.whiteColor,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ],
+                              ),
+                            ],
+                          );
+                        } else {
+                          return Center(
+                              child: Text(
+                            'Please wait...',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ));
+                        }
+                      },
+                    ),
                     CustomFormField(
                       label: "Crates sent : ",
                       controller: crateSent,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                      ],
                       validator: (value) {
                         if (value!.isEmpty) {
                           return "Please enter crates manufacture";
@@ -198,6 +302,9 @@ class _LineDetailsState extends State<LineDetails> {
                     ),
                     CustomFormField(
                       label: "Crates back : ",
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                      ],
                       controller: crateBack,
                       onChanged: (value) {
                         if (value!.isNotEmpty) {
@@ -247,6 +354,9 @@ class _LineDetailsState extends State<LineDetails> {
                     CustomFormField(
                       label: " Returned Crates : ",
                       controller: returnCrate,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                      ],
                       validator: (value) {
                         if (value!.isEmpty) {
                           return "Please enter crates";

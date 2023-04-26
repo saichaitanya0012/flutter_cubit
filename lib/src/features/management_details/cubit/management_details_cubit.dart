@@ -12,7 +12,7 @@ class ManagementDetailsCubit extends Cubit<ManagementDetailsState> {
     String lineCollection,
     String otherCollection,
     String totalCollection,
-    String expenses,
+      List<Map<String, dynamic>> expenses,
   ) async {
     try {
       emit(ManagementDetailsLoading());
@@ -84,7 +84,10 @@ class ManagementDetailsCubit extends Cubit<ManagementDetailsState> {
           "created_at": DateTime.now(),
         });
       }
-      emit(ManagementDetailsInitial());
+      emit(ManagementDetailsInitial(
+        isUpdate: true,
+      ));
+
     } catch (e) {
       emit(ManagementDetailsFailed(message: e.toString()));
     }

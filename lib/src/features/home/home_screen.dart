@@ -82,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
         // ),
         body: RefreshIndicator(
           onRefresh: () {
-            return homeCubit!.getRegionCollectionData();
+            return homeCubit!.getRegionCollectionData(id: widget.id);
           },
           child: ListView(
             children: [

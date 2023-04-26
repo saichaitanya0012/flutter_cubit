@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:goli_soda/src/features/management_details/cubit/management_details_cubit.dart';
 import 'package:goli_soda/src/features/management_details/cubit/management_details_cubit.dart';
@@ -18,10 +20,81 @@ class _ManagementDetailsScreenState extends State<ManagementDetailsScreen> {
   final lineCollection = TextEditingController();
   final otherCollection = TextEditingController();
   final totalCollection = TextEditingController();
-  final expenses = TextEditingController();
+  // final expenses = TextEditingController();
   DateTime? selectedDate;
 
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  List<String> expenseTypes = [];
+  List<num> expenseAmounts = [];
+  List<GlobalKey<FormState>> _formKeys = [];
+
+  void addExpense() {
+    setState(() {
+      expenseTypes.add('');
+      expenseAmounts.add(0);
+      _formKeys.add(GlobalKey<FormState>());
+    });
+  }
+
+  void updateExpenseType(int index, String value) {
+    setState(() {
+      expenseTypes[index] = value;
+    });
+  }
+
+  void updateExpenseAmount(int index, num value) {
+    setState(() {
+      expenseAmounts[index] = value;
+    });
+  }
+
+  void removeExpense(int index) {
+    setState(() {
+      expenseTypes.removeAt(index);
+      expenseAmounts.removeAt(index);
+      _formKeys.removeAt(index);
+    });
+  }
+
+  void saveDataToFirestore() {
+    bool isFormValid = true;
+    for (var formKey in _formKeys) {
+      if (!formKey.currentState!.validate()) {
+        isFormValid = false;
+      }
+    }
+
+    if (!isFormValid) {
+      return;
+    }
+
+    // Create a list of maps to store the entered details
+    List<Map<String, dynamic>> expenses = [];
+    for (int i = 0; i < expenseTypes.length; i++) {
+      Map<String, dynamic> expense = {
+        'type': expenseTypes[i],
+        'amount': expenseAmounts[i],
+      };
+      expenses.add(expense);
+    }
+
+    // Create a map to store the list of expenses
+    Map<String, dynamic> data = {
+      'expenses': expenses,
+    };
+
+    // Update the Firestore document with the map
+    FirebaseFirestore.instance
+        .collection('your_collection_name')
+        .doc('your_document_id')
+        .update(data)
+        .then((value) {
+      print('Data updated successfully');
+    }).catchError((error) {
+      print('Failed to update data: $error');
+    });
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -44,16 +117,26 @@ class _ManagementDetailsScreenState extends State<ManagementDetailsScreen> {
       BlocProvider.of<ManagementDetailsCubit>(context)
           .getManagementDetailsBasedOnDate(picked)
           .then((value) {
-        if (value.isEmpty) {
+        if (value.isNotEmpty) {
           lineCollection.text = value[0]['line_collection'];
           otherCollection.text = value[0]['other_collection'];
           totalCollection.text = value[0]['total_collection'];
-          expenses.text = value[0]['expenses'];
+          expenseTypes.clear();
+          expenseAmounts.clear();
+          _formKeys.clear();
+          for(int i = 0; i < value[0]['expenses'].length; i++) {
+            expenseTypes.add(value[0]['expenses'][i]['type']);
+            expenseAmounts.add(value[0]['expenses'][i]['amount']);
+            _formKeys.add(GlobalKey<FormState>());
+          }
         } else {
           lineCollection.text = "";
           otherCollection.text = "";
           totalCollection.text = "";
-          expenses.text = "";
+          expenseTypes.clear();
+          expenseAmounts.clear();
+          _formKeys.clear();
+          addExpense();
         }
       });
 
@@ -63,13 +146,14 @@ class _ManagementDetailsScreenState extends State<ManagementDetailsScreen> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ManagementDetailsCubit, ManagementDetailsState>(
       listener: (context, state) {
         if (state is ManagementDetailsInitial) {
-          Future.delayed(Duration(seconds: 0),(){
-            if(state.isUpdate){
+          Future.delayed(Duration(milliseconds: 100), () {
+            if (state.isUpdate) {
               CustomSnackBar()
                   .snackbarMessage(message: "Management Details Added Successfully");
               Navigator.pop(context);
@@ -115,6 +199,33 @@ class _ManagementDetailsScreenState extends State<ManagementDetailsScreen> {
                                 .snackbarMessage(message: "Please Select Date");
                             return;
                           } else {
+
+
+                            bool isFormValid = true;
+                            for (var formKey in _formKeys) {
+                              if (!formKey.currentState!.validate()) {
+                                isFormValid = false;
+                              }
+                            }
+
+                            if (!isFormValid) {
+                              return;
+                            }
+
+                            // Create a list of maps to store the entered details
+                            List<Map<String, dynamic>> expenses = [];
+                            for (int i = 0; i < expenseTypes.length; i++) {
+                              Map<String, dynamic> expense = {
+                                'type': expenseTypes[i],
+                                'amount': expenseAmounts[i],
+                              };
+                              expenses.add(expense);
+                            }
+
+                            // Create a map to store the list of expenses
+                            Map<String, dynamic> data = {
+                              'expenses': expenses,
+                            };
                             BlocProvider.of<ManagementDetailsCubit>(context)
                                 .createProductionDetails(
                                     selectedDate!,
@@ -123,7 +234,7 @@ class _ManagementDetailsScreenState extends State<ManagementDetailsScreen> {
                                     (int.parse(lineCollection.text) +
                                             int.parse(otherCollection.text))
                                         .toString(),
-                                    expenses.text);
+                                    expenses);
                           }
                         }
                       },
@@ -192,6 +303,9 @@ class _ManagementDetailsScreenState extends State<ManagementDetailsScreen> {
                     CustomFormField(
                       label: "Line Collection : ",
                       controller: lineCollection,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                      ],
                       validator: (value) {
                         if (value!.isEmpty) {
                           return "Please enter crates manufacture";
@@ -207,6 +321,9 @@ class _ManagementDetailsScreenState extends State<ManagementDetailsScreen> {
                     CustomFormField(
                       label: "Other Collection : ",
                       controller: otherCollection,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                      ],
                       validator: (value) {
                         if (value!.isEmpty) {
                           return "Please enter crates leakage";
@@ -252,86 +369,140 @@ class _ManagementDetailsScreenState extends State<ManagementDetailsScreen> {
                         ),
                       ],
                     ),
-                    CustomFormField(
-                      label: "Expenses : ",
-                      controller: expenses,
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return "Please enter crates";
-                        }
-                        return null;
+                    Text(
+                      "Expenses : ",
+                      style: TextStyle(
+                          color: AppColors.whiteColor,
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500),
+                    ),
+
+                    SizedBox(
+                      height: 10.sp,
+                    ),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: expenseTypes.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Form(
+                            key: _formKeys[index],
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: TextFormField(
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: AppColors.whiteColor,
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 01,
+                                    ),
+                                    keyboardType: TextInputType.name,
+                                    decoration: InputDecoration(
+                                      labelStyle: TextStyle(color: AppColors.whiteColor),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10.0),
+                                        borderSide: BorderSide(
+                                          color: AppColors.lightColor,
+                                          width: 2,
+                                          strokeAlign: StrokeAlign.inside,
+                                          style: BorderStyle.solid,
+                                        ),
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(20.0),
+                                        borderSide: BorderSide(
+                                          color: AppColors.semiBlueColor,
+                                          width: 2,
+                                          strokeAlign: StrokeAlign.inside,
+                                          style: BorderStyle.solid,
+                                        ),
+                                      ),
+                                      filled: true,
+                                    ),
+                                    validator: (value) {
+                                      if (value!.isEmpty) {
+                                        return 'Expense type is required';
+                                      }
+                                      return null;
+                                    },
+                                    onChanged: (value) => updateExpenseType(index, value),
+                                    initialValue: expenseTypes[index],
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                Flexible(
+                                  child: TextFormField(
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                                    ],
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: AppColors.whiteColor,
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 01,
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      labelStyle: TextStyle(color: AppColors.whiteColor),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10.0),
+                                        borderSide: BorderSide(
+                                          color: AppColors.lightColor,
+                                          width: 2,
+                                          strokeAlign: StrokeAlign.inside,
+                                          style: BorderStyle.solid,
+                                        ),
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(20.0),
+                                        borderSide: BorderSide(
+                                          color: AppColors.semiBlueColor,
+                                          width: 2,
+                                          strokeAlign: StrokeAlign.inside,
+                                          style: BorderStyle.solid,
+                                        ),
+                                      ),
+                                      filled: true,
+                                    ),
+                                    validator: (value) {
+                                      if (value!.isEmpty) {
+                                        return 'Expense amount is required';
+                                      } else if (num.tryParse(value) == null) {
+                                        return "Invalid expense";
+                                      }
+                                      return null;
+                                    },
+                                    onChanged: (value) {
+                                      if (value!.isNotEmpty) {
+                                        updateExpenseAmount(index, num.parse(value));
+                                      }
+                                    },
+                                    initialValue: expenseAmounts[index].toString(),
+                                  ),
+                                ),
+                                index==0?SizedBox():IconButton(
+                                  icon: Icon(Icons.remove,color: AppColors.whiteColor,  ),
+                                  onPressed: () => removeExpense(index),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
                       },
                     ),
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.end,
-                    //   children: [
-                    //     Padding(
-                    //       padding: EdgeInsets.only(bottom: 4.sp),
-                    //       child: Row(
-                    //         crossAxisAlignment: CrossAxisAlignment.end,
-                    //         children: [
-                    //           Text(
-                    //             "Total Crates : ",
-                    //             style: TextStyle(
-                    //                 color: Colors.grey,
-                    //                 fontSize: 8.sp,
-                    //                 fontWeight: FontWeight.w500),
-                    //           ),
-                    //           Text(
-                    //             "100",
-                    //             style: TextStyle(
-                    //                 color: AppColors.whiteColor,
-                    //                 fontSize: 14.sp,
-                    //                 fontWeight: FontWeight.w500),
-                    //           ),
-                    //         ],
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
-                    // Divider(),
-                    // Text(
-                    //   "Remarks : ",
-                    //   style: TextStyle(
-                    //       color: AppColors.whiteColor, fontSize: 8.sp, fontWeight: FontWeight.w500),
-                    // ),
-                    // Container(
-                    //   margin: EdgeInsets.only(
-                    //     top: 4.sp,
-                    //   ),
-                    //   // width: 70.sp,
-                    //   decoration: BoxDecoration(
-                    //     borderRadius: BorderRadius.circular(10),
-                    //     color: Colors.white,
-                    //     boxShadow: [
-                    //       BoxShadow(
-                    //         color: AppColors.whiteColor.withOpacity(0.2),
-                    //         blurRadius: 2,
-                    //         spreadRadius: 0,
-                    //         offset: Offset(0, 0),
-                    //       ),
-                    //     ],
-                    //   ),
-                    //
-                    //   child: Padding(
-                    //     padding: const EdgeInsets.all(8.0),
-                    //     child: TextFormField(
-                    //       controller: remarks,
-                    //       maxLines: 3,
-                    //       validator: (value) {
-                    //         if (value!.isEmpty) {
-                    //           return "Please enter remarks";
-                    //         }
-                    //         return null;
-                    //       },
-                    //       keyboardType: TextInputType.multiline,
-                    //       decoration: InputDecoration(
-                    //         hintText: 'Enter your remarks...',
-                    //         border: InputBorder.none,
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
+                    SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () => addExpense(),
+                          child: Text("Add Expense"),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:goli_soda/src/features/home/home_cubit.dart';
 import 'package:goli_soda/src/local_storage/hive_store.dart';
+import 'package:goli_soda/src/utils/common_snackbar.dart';
 import 'package:meta/meta.dart';
 
 part 'create_vendor_state.dart';
@@ -49,13 +50,47 @@ class CreateVendorCubit extends Cubit<CreateVendorState> {
       }).then((value) {
         print('Shop details added to Firestore');
         emit(CreateVendorInitial());
+        CustomSnackBar().snackbarSuccess(message: 'Shop added successfully');
         Navigator.pop(context, true);
       });
     } on FirebaseException catch (e) {
       emit(CreateVendorInitial());
+      CustomSnackBar().errorSnackBar(message: 'Error: ${e.message}');
       print('Error adding shop details to Firestore: $e');
     } catch (e) {
       emit(CreateVendorInitial());
+      CustomSnackBar().errorSnackBar(message: 'Error: ${e}');
+      print('Error adding shop details to Firestore: $e');
+    }
+  }
+
+  Future<void>  updateShopDetailsToFirestore(String shopName, String address, String phone,
+     String ownerName, String crate, context,String shopId) async {
+    emit(CreateVendorLoading());
+    try {
+      final DocumentReference docRef =
+          FirebaseFirestore.instance.collection('shops').doc(shopId);
+      docRef.update({
+        "id": docRef.id,
+        'shopName': shopName,
+        'address': address,
+        'phone': phone,
+        'ownerName': ownerName,
+        "crate_price": crate,
+        "created_by": HiveStore().get(Keys.userName),
+      }).then((value) {
+        print('Shop details updated');
+        emit(CreateVendorInitial());
+        CustomSnackBar().snackbarSuccess(message: 'Shop added successfully');
+        Navigator.pop(context, true);
+      });
+    } on FirebaseException catch (e) {
+      emit(CreateVendorInitial());
+      CustomSnackBar().errorSnackBar(message: 'Error: ${e.message}');
+      print('Error adding shop details to Firestore: $e');
+    } catch (e) {
+      emit(CreateVendorInitial());
+      CustomSnackBar().errorSnackBar(message: 'Error: ${e}');
       print('Error adding shop details to Firestore: $e');
     }
   }

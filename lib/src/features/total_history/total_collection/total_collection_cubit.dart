@@ -34,4 +34,26 @@ class TotalCollectionCubit extends Cubit<TotalCollectionState> {
       print('Error getting region collection data: $e');
     }
   }
+
+
+  Future<void> getPendingCollectedData() async {
+    emit(TotalCollectionLoading());
+    List<Map<dynamic, dynamic>> jsonList = [];
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final QuerySnapshot querySnapshot;
+    DateTime now = DateTime.now();
+    try {
+      querySnapshot = await firestore
+          .collection('pending')
+          .get();
+      for (QueryDocumentSnapshot documentSnapshot in querySnapshot.docs) {
+        final data = documentSnapshot.data() as Map<String, dynamic>;
+        jsonList.add(data);
+      }
+      emit(TotalCollectionLoaded(jsonList: jsonList));
+    } catch (e) {
+      emit(TotalCollectionError(message: e.toString()));
+      print('Error getting region collection data: $e');
+    }
+  }
 }

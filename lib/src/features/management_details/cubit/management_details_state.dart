@@ -5,7 +5,7 @@ abstract class ManagementDetailsState {}
 
 class ManagementDetailsInitial extends ManagementDetailsState {
   final bool isUpdate;
-  ManagementDetailsInitial({this.isUpdate = true});
+  ManagementDetailsInitial({this.isUpdate = false});
 }
 
 class ManagementDetailsLoading extends ManagementDetailsState {}

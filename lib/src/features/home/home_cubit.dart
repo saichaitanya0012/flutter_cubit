@@ -14,6 +14,7 @@ class HomeCubit extends Cubit<HomeState> {
   Future<void> getRegionCollectionData({String? keyword,String? id}) async {
     emit(HomeLoading());
     List<Map<dynamic, dynamic>> jsonList = [];
+    pendingAmount = 0;
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
     final QuerySnapshot querySnapshot;
     try {

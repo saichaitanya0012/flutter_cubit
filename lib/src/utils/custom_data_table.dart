@@ -41,11 +41,20 @@ class CustomDataTableState<T> extends State<CustomDataTable<T>> {
         width: width,
         child: isFirst!
             ? SizedBox()
-            : Text(
-                '$data',
-                style: TextStyle(color: AppColors.whiteColor, fontSize: 14.0),
-                textAlign: TextAlign.center,
+            : Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                        '$data',
+                        style: TextStyle(color: AppColors.whiteColor, fontSize: 14.0),
+                        textAlign: TextAlign.center,
+                      ),
+                  ],
+                ),
               ),
+            ),
       );
 
   TableBorder _buildBorder({

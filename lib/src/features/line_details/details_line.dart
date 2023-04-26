@@ -53,6 +53,7 @@ class _DetailsLineState extends State<DetailsLine> {
                 cellWidth: 100.sp,
                 borderColor: Colors.grey.shade300,
                 rowsCells: state.jsonList.map((e) => [
+                  e['line_name'],
                   e['crates_sent'],
                   e['crates_back'],
                   e['crates_sold'],
@@ -60,6 +61,7 @@ class _DetailsLineState extends State<DetailsLine> {
                 ]).toList(),
                 fixedColCells: state.jsonList.map((e) => DateFormat('d MMM yy').format(e['date'].toDate())).toList(),
                 fixedRowCells: [
+                  "Line Name",
                   "Crates Sent",
                   "Crates Back",
                   "Crates Sold",

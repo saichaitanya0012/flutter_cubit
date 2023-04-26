@@ -14,6 +14,8 @@ class LineDetailsCubit extends Cubit<LineDetailsState> {
       String cratesBack,
       String cratesSold,
       String returnedCrates,
+      String lineName,
+      String lineId,
       ) async {
     try {
       emit(LineDetailsLoading());
@@ -74,6 +76,8 @@ class LineDetailsCubit extends Cubit<LineDetailsState> {
           "id": documentReference.id,
           "date": date,
           "crates_sent": cratesSent,
+          "line_id": lineId,
+          "line_name": lineName,
           "crates_back": cratesBack,
           "crates_sold": cratesSold,
           "returned_crates": returnedCrates,

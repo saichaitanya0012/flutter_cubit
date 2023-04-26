@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:goli_soda/src/features/auth/sign_up/sign_up_cubit.dart';
 import 'package:goli_soda/src/features/auth/widget/custom_textfield.dart';
 import 'package:goli_soda/src/features/navigator.dart';
@@ -21,8 +22,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   SignUpCubit? signUpCubit;
 
+
+
+  // SignUpCubit? signUpCubit = GetIt.instance<SignUpCubit>();
+
   @override
   void initState() {
+    BlocProvider(
+      create: (context) => SignUpCubit(),
+    );
     signUpCubit = BlocProvider.of<SignUpCubit>(context);
     super.initState();
   }
@@ -56,7 +64,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     children: <Widget>[
                       CircleAvatar(
                         radius: 40.sp,
-                        backgroundImage: AssetImage('assets/images/logo.png'),
+                        backgroundImage: AssetImage('assets/images/goli_soda.jpeg'),
                       ),
                       SizedBox(
                         height: 15.h,

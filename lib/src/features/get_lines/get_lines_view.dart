@@ -22,11 +22,20 @@ class GetLinesScreen extends StatefulWidget {
 
 class _GetLinesScreenState extends State<GetLinesScreen> {
   GetLinesCubit? homeCubit;
+  final ScrollController _scrollController = ScrollController();
+
 
   @override
   void initState() {
     homeCubit = BlocProvider.of<GetLinesCubit>(context);
     homeCubit!.getRegionCollectionData();
+
+    _scrollController.addListener(() {
+      var nextPageTrigger = _scrollController.position.maxScrollExtent;
+      if (_scrollController.position.pixels == nextPageTrigger) {
+        // homeCubit!.getRegionCollectionData();
+      }
+    });
     super.initState();
   }
 
@@ -84,6 +93,7 @@ class _GetLinesScreenState extends State<GetLinesScreen> {
                             ),
                           )
                         : ListView.builder(
+                      controller: _scrollController,
                             shrinkWrap: true,
                             primary: false,
                             itemCount: state.jsonList?.length ?? 0,
